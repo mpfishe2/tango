@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #F0F0F0;
+        }
+
+        #chat {
+            width: 800px;
+            height: 700px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            padding: 10px;
+            background-color: white;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin: 5px;
+            padding: 10px;
+            border-radius: 15px;
+            max-width: 80%;
+            clear: both;
+            gap: 20px;
+        }
+
+        .bot {
+            background-color: #0084FF;
+            color: white;
+            float: left;
+        }
+
+        .user {
+            background-color: #F0F0F0;
+            color: black;
+            float: right;
+        }
+
+        #titleName {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #input-area {
+            position: fixed;
+            bottom: 10%;
+            width: 50%;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #input-area form {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        #input-area input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            height: 40px; 
+        }
+
+        .rounded-button {
+            border: none; 
+            padding: 10px 20px; 
+            background-color: #008CBA; 
+            color: white; 
+            cursor: pointer; 
+            border-radius: 20px; 
+            margin-left: 10px; 
+        }
+
+        /* Optional: Add some hover effect */
+        .rounded-button:hover {
+            background-color: #007B9A; 
+        }
+
+        /* photo upload effect */
+        .file-input {
+            display: none;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 8px 12px;
+            cursor: pointer;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            color: white;
+            background-color: #007bff;
+            margin-left: 10px; 
+        }
+
+        .custom-file-upload.uploaded {
+            background-color: #28a745; 
+            border-color: #28a745;
+        }
+
+        .custom-file-upload i {
+            margin-right: 5px;
+        }
+
+    </style>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+</head>
+<body>
+    <input type="hidden" id="session_id" value="{{ session_id }}">
+    
+    <div id="chat">
+        <h1 id="titleName">Chat</h1>
+    </div>
+
+    <div id="input-area">
+        <form id="messageForm" enctype="multipart/form-data">
+
+            <input type="text" id="message" name="message" onkeypress="if (event.keyCode == 13) { sendMessage(); return false; }">
+            <br>
+            <br>
+            <input type="file" id="photo" name="photo" class="file-input">
+            <label for="photo" class="custom-file-upload">
+                <i class="fa fa-camera"></i> <!-- Font Awesome icon -->
+                Upload Photo
+            </label>
+            <button class="rounded-button" type="button" onclick="sendMessage()">Send</button>
+        </form>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script>
+        let lastReply = '';
+        let sessionId = document.getElementById('session_id').value;
+
+        document.getElementById('messageForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+            sendMessage();
+        });
+
+        document.getElementById('photo').addEventListener('change', function() {
+            const label = document.querySelector('.custom-file-upload');
+            if (this.files.length > 0) {
+                label.classList.add('uploaded');
+                label.innerHTML = '<i class="fa fa-check"></i> Photo Uploaded';
+            } else {
+                label.classList.remove('uploaded');
+                label.innerHTML = '<i class="fa fa-camera"></i> Upload Photo';
+            }
+        });
+
+        function sendMessage() {
+            const message = $('#message').val();
+            $("#chat").append('<div class="message user">' + message + '</div>');
+            const formData = new FormData();
+            formData.append('session_id', sessionId);
+            formData.append('content', $('#message').val());
+            formData.append('sender', 'user');
+            const photo = $('#photo')[0].files[0];
+            if (photo) {
+                formData.append('photo', photo);
+            }
+            $('#message').val('');
+            $('#photo').val('');
+
+            $.ajax({
+                url: '/chat/submit/',
+                type: 'post',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    $("#chat").append('<div class="message bot">' + data + '</div>');
+                    $("#chat").scrollTop($("#chat")[0].scrollHeight);
+                    lastReply = data;
+                },
+                error: function() {
+                    console.log("Failure in POST to Bot -- getResponseFromBot()");
+                    alert('An error occurred.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
