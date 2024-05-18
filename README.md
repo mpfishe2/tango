@@ -16,6 +16,7 @@ Tango is a lightweight framework for building chatbots with Django, specifically
 ```
 DATABRICKS_TOKEN=enter_token_value_here
 DATABRICKS_URL=https://<databricks_deployment_name>.cloud.databricks.com/serving-endpoints
+DJANGO_SECRET=make_up_a_secret_value
 ```  
 2. Install the necessary libraries `pip3 install -r requirements.txt`  
 3. Instantiate the models for Django:  
